@@ -20,6 +20,78 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
+
+        /* 新しく追加するスタイル */
+        .portfolio-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .portfolio-form-group {
+            margin-bottom: 15px;
+        }
+        .portfolio-form-group label {
+            width: 120px; /* ラベルの幅を固定 */
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+        .portfolio-form-group input[type="text"],
+        .portfolio-form-group input[type="number"] {
+            width: calc(100% - 130px); /* ラベルの幅を考慮 */
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        .portfolio-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .portfolio-buttons button {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 1em;
+        }
+
+        #portfolioTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #portfolioTable th, #portfolioTable td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        #portfolioTable th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        #portfolioTable td button {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 0.9em;
+            margin-right: 5px;
+            display: inline-block; /* ボタンを横並びに */
+        }
+        .portfolio-value.positive {
+            color: #d9534f; /* 赤字（上昇と逆の色） */
+            font-weight: bold;
+        }
+        .portfolio-value.negative {
+            color: #5cb85c; /* 緑字（下落と逆の色） */
+            font-weight: bold;
+        }
+        .portfolio-value.zero {
+            color: #333;
+        }
+
+
+
+
         h1 {
             color: #2c3e50;
             text-align: center;
@@ -76,6 +148,20 @@
             gap: 15px; /* 子要素間の隙間 */
             justify-content: flex-start; /* 左寄せ */
         }
+
+        /* 株価カードの色変化用CSS */
+    .stock-card.positive {
+        background-color: #ffe0e0; /* 薄い赤色 */
+        border-color: #f0a0a0; /* 赤系のボーダー */
+    }
+    .stock-card.negative {
+        background-color: #e0ffe0; /* 薄い緑色 */
+        border-color: #a0f0a0; /* 緑系のボーダー */
+    }
+    .stock-card.zero-change {
+        background-color: #f9f9f9; /* 変化なしの場合はデフォルトまたは別の色 */
+        border-color: #ddd;
+    }
 
         .stock-card, .index-card { /* 両方のカードに適用 */
             background-color: #f9f9f9;
@@ -175,10 +261,61 @@
     <div class="container">
         <h1>Cloudflare Pages Functionからの株価・指数データ取得</h1>
         <p>下の入力欄に株価コードや指数コード（カンマ区切り）を入力し、「データを取得」ボタンをクリックしてください。</p>
+
+         <section class="portfolio-section">
+            <h2>保有銘柄のポートフォリオ管理</h2>
+            <p>ここにあなたの保有している株を追加し、評価損益を確認できます。</p>
+
+            <div class="portfolio-form-group">
+                <label for="portfolioCode">企業コード:</label>
+                <input type="text" id="portfolioCode" placeholder="例: 6758.T" required>
+            </div>
+            <div class="portfolio-form-group">
+                <label for="portfolioShares">取得株数:</label>
+                <input type="number" id="portfolioShares" min="1" value="100" required>
+            </div>
+            <div class="portfolio-form-group">
+                <label for="portfolioPrice">購入単価:</label>
+                <input type="number" id="portfolioPrice" min="0.01" step="0.01" value="1000" required>
+            </div>
+            <div class="portfolio-buttons">
+                <button id="addOrUpdatePortfolioBtn">銘柄を追加 / 更新</button>
+                <button id="clearPortfolioFormBtn" style="background-color: #6c757d;">入力クリア</button>
+            </div>
+
+            <h3>保有銘柄一覧</h3>
+            <table id="portfolioTable">
+                <thead>
+                    <tr>
+                        <th>企業コード</th>
+                        <th>取得株数</th>
+                        <th>購入単価</th>
+                        <th>現在株価</th>
+                        <th>評価額</th>
+                        <th>評価損益</th>
+                        <th>損益率</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="portfolioTableBody"> </tbody>
+             </table>
+            <p id="portfolioTotalValue" style="margin-top: 15px; font-weight: bold;">合計評価額: 計算中...</p>
+            <p id="portfolioTotalProfit" style="font-weight: bold;">合計評価損益: 計算中...</p>
+        </section>
+
+
+
+
+
         <div class="input-group">
-            <label for="stockCodes">株価・指数コード (例: 6758.T, 9984.T, ^DJI, ^N225):</label>
-            <input type="text" id="stockCodes" value="4755.T,5016.T,5803.T">
+            <label for="stockCodes">株価・指数コード (例: 6758.T, ^DJI, ^N225):</label>
+            <input type="text" id="stockCodes" value="4755.T,5016.T,5803.T,6758.T,7203.T,7267.T,8306.T,8308.T">
         </div>
+
+
+
+
+
 
         <button id="fetchDataButton">データを取得</button>
 
@@ -207,6 +344,205 @@
             // `functions/api/worker-data.js` を Pages にデプロイした場合、通常は `/api/worker-data` になります。
             const WORKER_URL = '/worker-data';
 
+                // ★★★ ここからポートフォリオ管理関連の要素取得 ★★★
+    const portfolioCodeInput = document.getElementById('portfolioCode');
+    const portfolioSharesInput = document.getElementById('portfolioShares');
+    const portfolioPriceInput = document.getElementById('portfolioPrice');
+    const addOrUpdatePortfolioBtn = document.getElementById('addOrUpdatePortfolioBtn');
+    const clearPortfolioFormBtn = document.getElementById('clearPortfolioFormBtn');
+    const portfolioTableBody = document.querySelector('#portfolioTable tbody');
+    const portfolioTotalValueSpan = document.getElementById('portfolioTotalValue');
+    const portfolioTotalProfitSpan = document.getElementById('portfolioTotalProfit');
+
+    let myPortfolio = []; // ポートフォリオデータを格納する配列
+
+    // ポートフォリオをlocalStorageから読み込む
+    function loadPortfolio() {
+        const storedPortfolio = localStorage.getItem('myPortfolio');
+        if (storedPortfolio) {
+            myPortfolio = JSON.parse(storedPortfolio);
+            renderPortfolio(); // 読み込んだら表示を更新
+        }
+    }
+
+    // ポートフォリオをlocalStorageに保存する
+    function savePortfolio() {
+        localStorage.setItem('myPortfolio', JSON.stringify(myPortfolio));
+    }
+
+    // ポートフォリオアイテムをレンダリングする関数
+    async function renderPortfolio() {
+        portfolioTableBody.innerHTML = ''; // 一旦テーブルをクリア
+        let totalCurrentValue = 0;
+        let totalInvestment = 0;
+
+        // 現在株価取得のために、ポートフォリオ内の全銘柄コードを収集
+        const codesToFetch = myPortfolio.map(item => item.code).join(',');
+
+        let currentPrices = {}; // { 'CODE': { current_price: '...', change_amount: '...' }, ...}
+
+        // 株価情報がなければ取得を試みる
+        if (codesToFetch) {
+            try {
+                const response = await fetch(`${WORKER_URL}?codes=${encodeURIComponent(codesToFetch)}`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+                    data.data.forEach(item => {
+                        if (item.status !== 'error') { // 正常にデータが取得できたもののみ
+                            currentPrices[item.company_code || item.symbol] = {
+                                current_price: parseFloat(String(item.current_price).replace(/,/g, '')), // カンマ除去して数値に変換
+                                change_amount: parseFloat(String(item.change_amount || '0').replace(/,/g, ''))
+                            };
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('ポートフォリオの株価取得に失敗:', error);
+                // エラー時でも、既存のデータで計算を続行
+            }
+        }
+
+
+        myPortfolio.forEach((item, index) => {
+            const row = portfolioTableBody.insertRow();
+            const currentPriceInfo = currentPrices[item.code] || { current_price: 'N/A', change_amount: 'N/A' };
+            const currentPrice = !isNaN(currentPriceInfo.current_price) ? currentPriceInfo.current_price : 'N/A';
+
+            let currentValue = 'N/A';
+            let profitLoss = 'N/A';
+            let profitLossPercentage = 'N/A';
+            let profitLossClass = '';
+
+            const investment = item.shares * item.purchasePrice;
+
+            if (typeof currentPrice === 'number') {
+                currentValue = currentPrice * item.shares;
+                profitLoss = currentValue - investment;
+                profitLossPercentage = (profitLoss / investment) * 100;
+
+                totalCurrentValue += currentValue;
+                totalInvestment += investment;
+
+                if (profitLoss > 0) {
+                    profitLossClass = 'positive';
+                } else if (profitLoss < 0) {
+                    profitLossClass = 'negative';
+                } else {
+                    profitLossClass = 'zero';
+                }
+            }
+
+
+            row.innerHTML = `
+                <td>${item.code}</td>
+                <td>${item.shares.toLocaleString()}株</td>
+                <td>${item.purchasePrice.toLocaleString()}円</td>
+                <td>${typeof currentPrice === 'number' ? currentPrice.toLocaleString() + '円' : currentPrice}</td>
+                <td>${typeof currentValue === 'number' ? currentValue.toLocaleString() + '円' : currentValue}</td>
+                <td class="${profitLossClass}">${typeof profitLoss === 'number' ? (profitLoss > 0 ? '+' : '') + profitLoss.toLocaleString() + '円' : profitLoss}</td>
+                <td class="${profitLossClass}">${typeof profitLossPercentage === 'number' ? (profitLossPercentage > 0 ? '+' : '') + profitLossPercentage.toFixed(2) + '%' : profitLossPercentage}</td>
+                <td>
+                    <button data-index="${index}" class="edit-portfolio-btn">編集</button>
+                    <button data-index="${index}" class="delete-portfolio-btn" style="background-color: #dc3545;">削除</button>
+                </td>
+            `;
+        });
+
+        // 合計値を表示
+        portfolioTotalValueSpan.textContent = `合計評価額: ${totalCurrentValue.toLocaleString()}円`;
+        const totalProfitLoss = totalCurrentValue - totalInvestment;
+        let totalProfitClass = '';
+        if (totalProfitLoss > 0) {
+            totalProfitClass = 'positive';
+        } else if (totalProfitLoss < 0) {
+            totalProfitClass = 'negative';
+        } else {
+            totalProfitClass = 'zero';
+        }
+        portfolioTotalProfitSpan.textContent = `合計評価損益: ${totalProfitLoss > 0 ? '+' : ''}${totalProfitLoss.toLocaleString()}円`;
+        portfolioTotalProfitSpan.className = totalProfitClass; // クラスを適用
+
+        attachPortfolioEventListeners(); // イベントリスナーを再設定
+    }
+
+    // ポートフォリオフォームの入力クリア
+    function clearPortfolioForm() {
+        portfolioCodeInput.value = '';
+        portfolioSharesInput.value = '100'; // デフォルト値に戻す
+        portfolioPriceInput.value = '1000'; // デフォルト値に戻す
+        addOrUpdatePortfolioBtn.textContent = '銘柄を追加 / 更新'; // ボタンテキストを元に戻す
+        addOrUpdatePortfolioBtn.removeAttribute('data-editing-index'); // 編集モードを解除
+    }
+
+    // 編集・削除ボタンのイベントリスナー
+    function attachPortfolioEventListeners() {
+        document.querySelectorAll('.edit-portfolio-btn').forEach(button => {
+            button.onclick = (event) => {
+                const index = parseInt(event.target.dataset.index);
+                const itemToEdit = myPortfolio[index];
+                portfolioCodeInput.value = itemToEdit.code;
+                portfolioSharesInput.value = itemToEdit.shares;
+                portfolioPriceInput.value = itemToEdit.purchasePrice;
+                addOrUpdatePortfolioBtn.textContent = '更新を保存';
+                addOrUpdatePortfolioBtn.setAttribute('data-editing-index', index); // 編集中のインデックスを保持
+            };
+        });
+
+        document.querySelectorAll('.delete-portfolio-btn').forEach(button => {
+            button.onclick = (event) => {
+                const index = parseInt(event.target.dataset.index);
+                if (confirm(`${myPortfolio[index].code} をポートフォリオから削除しますか？`)) {
+                    myPortfolio.splice(index, 1); // 配列から削除
+                    savePortfolio(); // 保存
+                    renderPortfolio(); // 再描画
+                    clearPortfolioForm(); // フォームもクリア
+                }
+            };
+        });
+    }
+
+    // 「銘柄を追加 / 更新」ボタンのクリックイベント
+    addOrUpdatePortfolioBtn.addEventListener('click', () => {
+        const code = portfolioCodeInput.value.trim().toUpperCase(); // 大文字に変換
+        const shares = parseInt(portfolioSharesInput.value);
+        const price = parseFloat(portfolioPriceInput.value);
+
+        if (!code || isNaN(shares) || shares <= 0 || isNaN(price) || price <= 0) {
+            alert('企業コード、取得株数、購入単価を正しく入力してください。');
+            return;
+        }
+
+        const editingIndex = addOrUpdatePortfolioBtn.getAttribute('data-editing-index');
+
+        if (editingIndex !== null) {
+            // 編集モード
+            myPortfolio[parseInt(editingIndex)] = { code, shares, purchasePrice: price };
+        } else {
+            // 新規追加モード（重複チェック）
+            const existingItemIndex = myPortfolio.findIndex(item => item.code === code);
+            if (existingItemIndex !== -1) {
+                // 既存の銘柄があれば更新
+                if (confirm(`${code} は既にポートフォリオに存在します。取得株数と購入単価を更新しますか？`)) {
+                    myPortfolio[existingItemIndex].shares = shares;
+                    myPortfolio[existingItemIndex].purchasePrice = price;
+                } else {
+                    return; // 更新しない場合は処理を中断
+                }
+            } else {
+                // 新規追加
+                myPortfolio.push({ code, shares, purchasePrice: price, purchaseDate: new Date().toISOString().split('T')[0] }); // 購入日も自動追加
+            }
+        }
+
+        savePortfolio(); // 保存
+        renderPortfolio(); // 再描画
+        clearPortfolioForm(); // フォームをクリア
+    });
+
+    // 「入力クリア」ボタンのクリックイベント
+    clearPortfolioFormBtn.addEventListener('click', clearPortfolioForm);
+
             // データを取得して表示する非同期関数
             async function fetchData() {
                 const codes = stockCodesInput.value.trim();
@@ -222,7 +558,7 @@
                     // codesが空文字列であればクエリパラメータなしでWorkerを呼び出す
                     // encodeURIComponent で特殊文字をURLエンコード
                     const urlToFetch = codes ? `${WORKER_URL}?codes=${encodeURIComponent(codes)}` : WORKER_URL;
-                    console.log(`Fetching data from: ${urlToFetch}`);
+                    
                     const response = await fetch(urlToFetch);
                     const data = await response.json(); // Pages FunctionからのJSONレスポンスをパース
 
@@ -247,6 +583,19 @@
                                 } else if (item.type === 'stock') {
                                     card = document.createElement('div');
                                     card.className = 'stock-card';
+                                     // ★★★ ここから追加・修正 ★★★
+                            const changeAmount = parseFloat(item.change_amount); // 数値に変換
+                            if (!isNaN(changeAmount)) { // 数値として有効かチェック
+                                if (changeAmount > 0) {
+                                    card.classList.add('positive'); // 正の場合、'positive' クラスを追加
+                                } else if (changeAmount < 0) {
+                                    card.classList.add('negative'); // 負の場合、'negative' クラスを追加
+                                } else {
+                                    card.classList.add('zero-change'); // 変化がない場合（0）、'zero-change' クラスを追加
+                                }
+                            }
+                            // ★★★ ここまで追加・修正 ★★★
+
                                     card.innerHTML = `
                                         <h3>${item.company_name || 'N/A'} (${item.company_code || 'N/A'})</h3>
                                         <p><strong>現在の株価:</strong> ${item.current_price || 'N/A'}</p>
