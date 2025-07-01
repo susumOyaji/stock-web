@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare Pages Function Demo - 株価・指数取得</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        #results {
+            display: flex; /* Flexboxコンテナにする */
+            flex-wrap: wrap; /* 子要素を折り返す */
+            gap: 15px; /* 子要素間の隙間 */
+            justify-content: flex-start; /* 左寄せ */
+        }
+
+        .stock-card, .index-card { /* 両方のカードに適用 */
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            flex: 0 0 calc(20% - 12px); /* 1行に5つ表示 (20%) - gapの調整 */
+            max-width: calc(20% - 12px); /* 最大幅も設定 */
+            box-sizing: border-box;
+            min-width: 180px;
+            display: flex; /* 内側もflexboxで調整 */
+            flex-direction: column;
+        }
+
+        /* エラーカードのスタイル */
+        .error-card-item {
+            background-color: #f8d7da; /* 薄い赤 */
+            border: 1px solid #f5c6cb;
+            color: #721c24; /* 濃い赤のテキスト */
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            flex: 0 0 calc(20% - 12px); /* 他のカードと同じサイズ */
+            max-width: calc(20% - 12px);
+            box-sizing: border-box;
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 画面が小さい場合のレスポンシブ対応 */
+        @media (max-width: 1024px) {
+            .stock-card, .index-card, .error-card-item { /* エラーカードも含む */
+                flex: 0 0 calc(25% - 11.25px); /* 1行に4つ */
+                max-width: calc(25% - 11.25px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stock-card, .index-card, .error-card-item { /* エラーカードも含む */
+                flex: 0 0 calc(33.33% - 10px); /* 1行に3つ */
+                max-width: calc(33.33% - 10px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stock-card, .index-card, .error-card-item { /* エラーカードも含む */
+                flex: 0 0 calc(50% - 7.5px); /* 1行に2つ */
+                max-width: calc(50% - 7.5px);
+            }
+        }
+
+        .stock-card p, .index-card p, .error-card-item p { /* エラーカードも含む */
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .stock-card h3, .index-card h3 {
+            font-size: 1.1em;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .stock-card p strong, .index-card p strong, .error-card-item strong { /* エラーカードも含む */
+            color: #333;
+        }
+        /* エラーカード内のエラーメッセージにさらに強い赤を適用 */
+        .error-card-item .error {
+            color: #721c24;
+            font-weight: bold;
+        }
+
+        /* 全体エラーメッセージのスタイル */
+        .error {
+            color: #d9534f;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #007bff;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+        pre {
+            background-color: #eee;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cloudflare Pages Functionからの株価・指数データ取得</h1>
+        <p>下の入力欄に株価コードや指数コード（カンマ区切り）を入力し、「データを取得」ボタンをクリックしてください。</p>
+        <div class="input-group">
+            <label for="stockCodes">株価・指数コード (例: 6758.T, 9984.T, ^DJI, ^N225):</label>
+            <input type="text" id="stockCodes" value="6758.T,^DJI,^N225">
+        </div>
+
+        <button id="fetchDataButton">データを取得</button>
+
+        <div class="results-section">
+            <h2>取得結果</h2>
+            <div id="loading" class="loading" style="display: none;">データを取得中...</div>
+            <div id="results">
+                </div>
+            <div id="globalError" class="error" style="display: none;">
+                </div>
+            <h3>生データ (デバッグ用)</h3>
+            <pre id="rawData"></pre>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fetchDataButton = document.getElementById('fetchDataButton');
+            const stockCodesInput = document.getElementById('stockCodes');
+            const resultsDiv = document.getElementById('results');
+            const globalErrorDiv = document.getElementById('globalError');
+            const loadingDiv = document.getElementById('loading');
+            const rawDataPre = document.getElementById('rawData');
+
+            // Pages Functionのエンドポイントを設定します。
+            // `functions/api/worker-data.js` を Pages にデプロイした場合、通常は `/api/worker-data` になります。
+            const WORKER_URL = '/worker-data';
+
+            // データを取得して表示する非同期関数
+            async function fetchData() {
+                const codes = stockCodesInput.value.trim();
+
+                // 表示内容を初期化
+                resultsDiv.innerHTML = '';
+                globalErrorDiv.style.display = 'none';
+                globalErrorDiv.textContent = '';
+                loadingDiv.style.display = 'block';
+                rawDataPre.textContent = '';
+
+                try {
+                    // codesが空文字列であればクエリパラメータなしでWorkerを呼び出す
+                    // encodeURIComponent で特殊文字をURLエンコード
+                    const urlToFetch = codes ? `${WORKER_URL}?codes=${encodeURIComponent(codes)}` : WORKER_URL;
+                    const response = await fetch(urlToFetch);
+                    const data = await response.json(); // Pages FunctionからのJSONレスポンスをパース
+
+                    loadingDiv.style.display = 'none'; // ローディング表示を非表示に
+                    rawDataPre.textContent = JSON.stringify(data, null, 2); // デバッグ用に生データを表示
+
+                    // Pages Functionからのレスポンスの status と data.status をチェック
+                    if (response.ok && data.status === 'success') {
+                        if (Array.isArray(data.data) && data.data.length > 0) {
+                            data.data.forEach(item => {
+                                let card;
+                                if (item.status === 'error') { // 個別のデータ取得エラー
+                                    card = document.createElement('div');
+                                    card.className = 'error-card-item'; // エラー表示用のクラス
+                                    card.innerHTML = `
+                                        <p><strong>コード:</strong> ${item.symbol || item.company_code || '不明'}</p>
+                                        <p><strong>エラー:</strong> ${item.message || 'データ取得失敗'}</p>
+                                    `;
+                                } else if (item.type === 'stock') {
+                                    card = document.createElement('div');
+                                    card.className = 'stock-card';
+                                    card.innerHTML = `
+                                        <h3>${item.company_name || 'N/A'} (${item.company_code || 'N/A'})</h3>
+                                        <p><strong>現在の株価:</strong> ${item.current_price || 'N/A'}</p>
+                                        <p><strong>前日比:</strong> ${item.change_amount || 'N/A'} (${item.change_percentage || 'N/A'})</p>
+                                        <p><strong>更新日時:</strong> ${item.update_time || 'N/A'}</p>
+                                        <p><strong>ソース:</strong> ${item.source || 'N/A'}</p>
+                                    `;
+                                } else if (item.type === 'index') {
+                                    card = document.createElement('div');
+                                    card.className = 'index-card';
+                                    card.innerHTML = `
+                                        <h3>${item.index_name || 'N/A'} (${item.symbol || 'N/A'})</h3>
+                                        <p><strong>現在の値:</strong> ${item.current_price || 'N/A'}</p>
+                                        <p><strong>変化:</strong> ${item.change || 'N/A'} (${item.change_percentage || 'N/A'})</p>
+                                        <p><strong>更新日時:</strong> ${item.update_time || 'N/A'}</p>
+                                        <p><strong>ソース:</strong> ${item.source || 'N/A'}</p>
+                                    `;
+                                }
+
+                                if (card) {
+                                    resultsDiv.appendChild(card);
+                                }
+                            });
+                        } else {
+                            resultsDiv.innerHTML = '<p>指定されたコードのデータは見つかりませんでした。</p>';
+                        }
+                    } else {
+                        // Pages Functionまたは既存Workerからのエラーレスポンスの場合
+                        globalErrorDiv.textContent = `APIエラー: ${data.message || response.statusText || '不明なエラー'}`;
+                        globalErrorDiv.style.display = 'block';
+                    }
+
+                } catch (error) {
+                    console.error('データの取得に失敗しました:', error);
+                    loadingDiv.style.display = 'none';
+                    globalErrorDiv.textContent = `ネットワークエラー: ${error.message}`;
+                    globalErrorDiv.style.display = 'block';
+                }
+            }
+
+            // ボタンクリックイベントリスナー
+            fetchDataButton.addEventListener('click', fetchData);
+
+            // ページロード時にデータを取得（初回表示用）
+            fetchData(); // ここで fetchData() を直接呼び出します
+        });
+    </script>
+</body>
+</html>
