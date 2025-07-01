@@ -17,6 +17,7 @@ export async function onRequest(context) {
       workerFetchUrl += `?codes=${encodeURIComponent(codes)}`;
     }
 
+   
     // 既存のWorkerへのリクエストオプションを設定
     const fetchOptions = {
       method: context.request.method, // Pages Functionへのリクエストメソッドをそのまま転送

@@ -177,7 +177,7 @@
         <p>下の入力欄に株価コードや指数コード（カンマ区切り）を入力し、「データを取得」ボタンをクリックしてください。</p>
         <div class="input-group">
             <label for="stockCodes">株価・指数コード (例: 6758.T, 9984.T, ^DJI, ^N225):</label>
-            <input type="text" id="stockCodes" value="6758.T,^DJI,^N225">
+            <input type="text" id="stockCodes" value="4755.T,5016.T,5803.T">
         </div>
 
         <button id="fetchDataButton">データを取得</button>
@@ -222,6 +222,7 @@
                     // codesが空文字列であればクエリパラメータなしでWorkerを呼び出す
                     // encodeURIComponent で特殊文字をURLエンコード
                     const urlToFetch = codes ? `${WORKER_URL}?codes=${encodeURIComponent(codes)}` : WORKER_URL;
+                    console.log(`Fetching data from: ${urlToFetch}`);
                     const response = await fetch(urlToFetch);
                     const data = await response.json(); // Pages FunctionからのJSONレスポンスをパース
 
@@ -230,8 +231,11 @@
 
                     // Pages Functionからのレスポンスの status と data.status をチェック
                     if (response.ok && data.status === 'success') {
-                        if (Array.isArray(data.data) && data.data.length > 0) {
-                            data.data.forEach(item => {
+                         // 変更点： data.data.data にアクセスする
+                    const fetchedItems = data.data.data; // ★★★ この行を修正 ★★★
+
+                        if (Array.isArray(fetchedItems) && fetchedItems.length > 0) {
+                            fetchedItems.forEach(item => {
                                 let card;
                                 if (item.status === 'error') { // 個別のデータ取得エラー
                                     card = document.createElement('div');
