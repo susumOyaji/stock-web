@@ -200,8 +200,27 @@
             border-color: #ddd;
         }
 
-        .stock-card,
-        .index-card {
+        .index-card.positive {
+            background-color: #ffe0e0;
+            /* 薄い赤色 */
+            border-color: #f0a0a0;
+            /* 赤系のボーダー */
+        }
+
+        .index-card.negative {
+            background-color: #e0ffe0;
+            /* 薄い緑色 */
+            border-color: #a0f0a0;
+            /* 緑系のボーダー */
+        }
+
+        .index-card.zero-change {
+            background-color: #f9f9f9;
+            /* 変化なしの場合はデフォルトまたは別の色 */
+            border-color: #ddd;
+        }
+
+        .stock-card {
             /* 両方のカードに適用 */
             background-color: #f9f9f9;
             border: 1px solid #ddd;
@@ -218,6 +237,67 @@
             /* 内側もflexboxで調整 */
             flex-direction: column;
         }
+
+        /* 指数・為替カードの幅は1行表示なので調整 */
+        .index-card,
+        .forex-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            flex: 1 1 33%;
+            /* 2列表示で幅を確保 (gap考慮) */
+            max-width: calc(33% - 10px);
+            /* 2列表示の例 (gap考慮) */
+            box-sizing: border-box;
+            min-width: 300px;
+            /* 少なくともこの幅は確保 */
+        }
+
+        /* もし本当に1行に1つだけ表示したいなら、flex: 1 1 100%; max-width: 100%; にする */
+
+
+        /* 新しく追加するスタイル */
+        /* 指数・為替用コンテナのスタイル */
+        .index-forex-container {
+            display: flex;
+            flex-wrap: wrap;
+            /* 必要に応じて折り返すか、flex-direction: column; で縦並びも検討 */
+            gap: 20px;
+            /* カード間のスペース */
+            margin-top: 20px;
+            margin-bottom: 30px;
+            /* 他のセクションとの区切り */
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            /* 区切り線 */
+        }
+
+        /* 個別株・エラーカードの表示スタイル (既存のresultsDivに適用) */
+        .results-grid {
+            /* 新しいクラス名、または既存の results Div に直接適用 */
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            /* カード間のスペース */
+            margin-top: 20px;
+        }
+
+        /* 個々のカードの幅を調整 */
+        .stock-card,
+        .error-card-item {
+            flex: 0 0 calc(25% - 15px);
+            /* 4列表示の例 (20% - gapの調整) */
+            max-width: calc(25% - 15px);
+            /* min-width: 180px; はそのまま */
+            box-sizing: border-box;
+            /* ... その他の既存スタイル ... */
+        }
+
+     
+
+
 
         /* エラーカードのスタイル */
         .error-card-item {
@@ -381,8 +461,8 @@
 
         <h3>下の入力欄に株価コードや指数コード（カンマ区切り）を入力し、「データを取得」ボタンをクリックしてください。</h3>
         <div class="input-group">
-            <label for="stockCodes">株価・指数コード (例: 6758.T, ^DJI, ^N225):</label>
-            <input type="text" id="stockCodes" value="4755.T,5016.T,5803.T,6758.T,7203.T,7267.T,8306.T,8308.T">
+            <label for="stockCodes">株価・指数コード (例: 6758.T, 4755.T, 5016.T):</label>
+            <input type="text" id="stockCodes" value="">
         </div>
 
 
@@ -428,10 +508,15 @@
             const portfolioTotalProfitSpan = document.getElementById('portfolioTotalProfit');
 
             let myPortfolio = []; // ポートフォリオデータを格納する配列
+            loadPortfolio(); // ← これを追加
+           
+
 
             // ポートフォリオをlocalStorageから読み込む
             function loadPortfolio() {
+                console.log('--- loadPortfolio() が実行されました ---'); // デバッグ用
                 const storedPortfolio = localStorage.getItem('myPortfolio');
+                console.log('localStorageから読み込んだデータ (raw):', storedPortfolio); // デバッグ用
                 if (storedPortfolio) {
                     myPortfolio = JSON.parse(storedPortfolio);
                     renderPortfolio(); // 読み込んだら表示を更新
@@ -440,6 +525,7 @@
 
             // ポートフォリオをlocalStorageに保存する
             function savePortfolio() {
+                console.log('myPortfolioにセーブされたデータ:', myPortfolio); // デバッグ用
                 localStorage.setItem('myPortfolio', JSON.stringify(myPortfolio));
             }
 
@@ -615,11 +701,11 @@
 
             // 「入力クリア」ボタンのクリックイベント
             clearPortfolioFormBtn.addEventListener('click', clearPortfolioForm);
-
+            
             // データを取得して表示する非同期関数
             async function fetchData() {
-                const codes = stockCodesInput.value.trim();
-
+                //const codes = stockCodesInput.value.trim();
+                const codes = myPortfolio.map(item => item.code).join(',');
                 // 表示内容を初期化
                 resultsDiv.innerHTML = '';
                 globalErrorDiv.style.display = 'none';
@@ -679,13 +765,44 @@
                                 } else if (item.type === 'index') {
                                     card = document.createElement('div');
                                     card.className = 'index-card';
+                                    // 前日比の正負で背景色を変えたい場合は、株価カードと同様のロジックを追加
+                                    const changeAmount = parseFloat(item.change_amount);
+                                    if (!isNaN(changeAmount)) {
+                                        if (changeAmount > 0) {
+                                            card.classList.add('positive'); // 赤
+                                        } else if (changeAmount < 0) {
+                                            card.classList.add('negative'); // 緑
+                                        } else {
+                                            card.classList.add('zero-change');
+                                        }
+                                    }
                                     card.innerHTML = `
                                         <h3>${item.index_name || 'N/A'} (${item.symbol || 'N/A'})</h3>
                                         <p><strong>現在の値:</strong> ${item.current_price || 'N/A'}</p>
-                                        <p><strong>変化:</strong> ${item.change || 'N/A'} (${item.change_percentage || 'N/A'})</p>
+                                        <p><strong>前日比:</strong> ${item.change_amount || 'N/A'} (${item.change_percentage || 'N/A'})</p>
                                         <p><strong>更新日時:</strong> ${item.update_time || 'N/A'}</p>
                                         <p><strong>ソース:</strong> ${item.source || 'N/A'}</p>
                                     `;
+                                } else if (item.type === 'forex') { // ★★★ ここを追加 ★★★
+                                    card = document.createElement('div');
+                                    card.className = 'forex-card'; // 新しいクラス名
+                                    // 前日比の正負で背景色を変えたい場合は、株価カードと同様のロジックを追加
+                                    const changeAmount = parseFloat(String(item.change_amount).replace(/,/g, ''));
+                                    if (!isNaN(changeAmount)) {
+                                        if (changeAmount > 0) {
+                                            card.classList.add('positive'); // 赤
+                                        } else if (changeAmount < 0) {
+                                            card.classList.add('negative'); // 緑
+                                        } else {
+                                            card.classList.add('zero-change');
+                                        }
+                                    }
+                                    card.innerHTML = `
+                                <h3>${item.currency_pair || 'N/A'} (${item.symbol || 'N/A'})</h3>
+                                <p><strong>現在のレート:</strong> ${item.current_price || 'N/A'}</p>
+                                <p><strong>更新日時:</strong> ${item.update_time || 'N/A'}</p>
+                                <p><strong>ソース:</strong> ${item.source || 'N/A'}</p>
+                            `;
                                 }
 
                                 if (card) {
