@@ -24,10 +24,10 @@
         }
 
         .portfolio-container {
-            max-width: 500px;
-            margin: 10px auto;
+            max-width: 600px;
+            margin: 30px auto;
             background-color: #97e8f7;
-            padding: 10px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             font-size: 10px;         /* 文字サイズ */
@@ -41,26 +41,26 @@
         .portfolio-section {
             margin-top: 40px;
             padding-top: 20px;
-            /*border-top: 1px solid #eee;*/
+            border-top: 1px solid #eee;
         }
 
         .portfolio-form-group {
             /*margin-bottom: 15px;*/
             display: flex; /* Flexbox を有効にして要素を横並びにする */
             align-items: center; /* 要素を垂直方向の中央に揃える */
-            gap: 5px; /* 要素間のスペースを10pxにする */
-            margin-bottom: 5px; /* 各フォームグループの下部に余白を設定 */
+            gap: 10px; /* 要素間のスペースを10pxにする */
+            margin-bottom: 15px; /* 各フォームグループの下部に余白を設定 */
         }
 
         .portfolio-form-group button {
-            width: 100px; /* ボタンの幅を150pxに固定 */
+            width: 150px; /* ボタンの幅を150pxに固定 */
             flex-shrink: 0; /* ボタンが縮まないようにする */
             padding: 8px 12px;
             font-size: 0.9em;
         }
 
         .portfolio-form-group label {
-            width: 60px;
+            width: 120px;
             /* ラベルの幅を固定 */
             display: inline-block;
             margin-bottom: 5px;
@@ -68,7 +68,7 @@
 
         .portfolio-form-group input[type="text"],
         .portfolio-form-group input[type="number"] {
-            width: 80px;
+            width: 200px;
             /* 入力フィールドの幅を固定 */
             padding: 8px;
             border: 1px solid #ccc;
@@ -458,7 +458,9 @@
                 <label for="portfolioPrice">購入単価:</label>
                 <input type="number" id="portfolioPrice" min="0.01" step="0.01" value="1000" required>
             </div>
-           
+            <div class="portfolio-form-group">
+                <button id="clearPortfolioFormBtn" style="background-color: #6c757d;">入力クリア</button>
+            </div>
 
             <h3>保有銘柄一覧</h3>
             <table id="portfolioTable">
